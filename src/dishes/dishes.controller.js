@@ -62,6 +62,7 @@ function validateDishExists(req, res, next) {
     }
 }
 
+
 function deleteDishExists(req, res, next) {
     let { dishId } = req.params;
     dishId = dishId;
@@ -82,14 +83,12 @@ function deleteDishExists(req, res, next) {
 
 
 
-
-
 //lists all dishes---------------------------------------------------
 function list(req, res, next) {
     res.send({ data: dishes })
 }
 
-//---------CREATE(post)-------------------------------------------------------
+//create(post)-------------------------------------------------------
 
 function create(req, res, next) {
     const { name, description, price, image_url } = req.body.data;
@@ -102,6 +101,7 @@ function create(req, res, next) {
     };
     dishes.push(newDish);
     res.status(201).json({data: newDish});
+
   }
 
 
@@ -129,20 +129,20 @@ function update(req, res, next) {
     res.json({ data: dish });
   }
 
-//does not work when checking if id's dont match
-// function validateUpdateId(req, res, next){
-//     const dishId = res.locals.dish.id
-//     const{ data: { name, description, price, image_url, id } = {} } = req.body;
 
-//     if(dishId === id){
-//         next()
-//     } else {
-//         next({
-//             status: 400,
-//             message: `${id} does not match`
-//           })
-//     }
-// }
+function validateUpdateId(req, res, next){
+    const dishId = res.locals.dish.id
+    const{ data: { name, description, price, image_url, id } = {} } = req.body;
+
+    if(!id || dishId === id){
+        next()
+    } else {
+        next({
+            status: 400,
+            message: `id: ${id} does not match`
+          })
+    }
+}
 
 
 //DELETE --------------------------------------------------------
@@ -161,6 +161,6 @@ module.exports = {
     list,
     create: [validateDataExists, ...fields.map(fieldValidator), create],
     read: [validateDishExists, read],
-    update: [validateDishExists, ...fields.map(fieldValidator), update],
+    update: [validateDishExists, validateUpdateId, ...fields.map(fieldValidator), update],
     delete: [deleteDishExists, destroy]
 }

@@ -25,7 +25,7 @@ function validateDataExists(req, res, next) {
 function fieldValidator(field) {
     return function (req, res, next) {
       if (req.body.data[field]) {
-        if(field === 'price' && req.body.data[field] < 0){
+        if(field === 'price' && (req.body.data[field] < 0 || typeof req.body.data[field] !== 'number')){
             next({
                 status: 400,
                 message: `Dish must indlude a ${field}`
@@ -43,7 +43,7 @@ function fieldValidator(field) {
 }
 
 
-//validation middleware(validates id in route) 
+//validation middleware(validates id in route) (READ/UPDATE)
 function validateDishExists(req, res, next) {
     let { dishId } = req.params;
     dishId = dishId;
@@ -62,6 +62,26 @@ function validateDishExists(req, res, next) {
     }
 }
 
+function deleteDishExists(req, res, next) {
+    let { dishId } = req.params;
+    dishId = dishId;
+    let index = dishes.findIndex(dish => dish.id === req.params.dishId);
+    if (index > -1) {
+      let dish = dishes[index];
+      // save the dinosaur that we found for future use
+      res.locals.dish = dish;
+      res.locals.index = index;
+      next({status: 405});
+    } else {
+      next({
+        status: 405,
+        message: `Could not find dish with id ${dishId}`
+      })
+    }
+}
+
+
+
 
 
 //lists all dishes---------------------------------------------------
@@ -69,7 +89,7 @@ function list(req, res, next) {
     res.send({ data: dishes })
 }
 
-//create(post)-------------------------------------------------------
+//---------CREATE(post)-------------------------------------------------------
 
 function create(req, res, next) {
     const { name, description, price, image_url } = req.body.data;
@@ -81,7 +101,7 @@ function create(req, res, next) {
       "id": nextId(),
     };
     dishes.push(newDish);
-    res.status(201).send(newDish);
+    res.status(201).json({data: newDish});
   }
 
 
@@ -109,6 +129,30 @@ function update(req, res, next) {
     res.json({ data: dish });
   }
 
+//does not work when checking if id's dont match
+// function validateUpdateId(req, res, next){
+//     const dishId = res.locals.dish.id
+//     const{ data: { name, description, price, image_url, id } = {} } = req.body;
+
+//     if(dishId === id){
+//         next()
+//     } else {
+//         next({
+//             status: 400,
+//             message: `${id} does not match`
+//           })
+//     }
+// }
+
+
+//DELETE --------------------------------------------------------
+function destroy(req, res, next) {
+    const { dishId } = req.params;
+    const index = pastes.findIndex((dish) => dish.id === dishId);
+    // `splice()` returns an array of the deleted elements, even if it is one element
+    dishes.splice(index, 1);
+    res.sendStatus(204);
+  }
 
 //fields for create validator
 let fields = ['name', 'description', 'price', 'image_url']
@@ -117,5 +161,6 @@ module.exports = {
     list,
     create: [validateDataExists, ...fields.map(fieldValidator), create],
     read: [validateDishExists, read],
-    update: [validateDishExists, ...fields.map(fieldValidator), update]
+    update: [validateDishExists, ...fields.map(fieldValidator), update],
+    delete: [deleteDishExists, destroy]
 }

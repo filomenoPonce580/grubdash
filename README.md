@@ -11,5 +11,12 @@ Navigate to the project directory using cd grubdash.
 Install the required dependencies using npm install.
 Start the development server using npm start.
 
+# API Calls
+
+> http://localhost:3000/dishes
+
+
+http://localhost:3000/orders
+
 # Running Tests
 This project includes a set of tests that can be run using the command line. To run the tests, use the command npm test.
